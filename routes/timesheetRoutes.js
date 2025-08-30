@@ -3,7 +3,7 @@ const router = express.Router();
 const timesheetController = require("../controllers/timesheetController");
 const verifyJWT = require("../middleware/verifyJWT");
 
-//router.use(verifyJWT);
+router.use(verifyJWT);
 
 router
   .route("/")
