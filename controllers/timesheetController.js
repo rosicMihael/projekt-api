@@ -2,8 +2,8 @@ const Timesheet = require("../models/Timesheet");
 const User = require("../models/User");
 const asyncHandler = require("express-async-handler");
 
-// @desc Get all work logs for a user
-// @route GET /timesheet
+// @desc Get all timesheets
+// @route GET /timesheets
 // @access Private
 const getTimesheets = asyncHandler(async (req, res) => {
   const timesheets = await Timesheet.find().lean();
@@ -19,8 +19,21 @@ const getTimesheets = asyncHandler(async (req, res) => {
   res.json(timesheetsWithUser);
 });
 
+// @desc Get all daily logs from a timesheet
+// @route GET /timesheets/:timesheetId/dailyLogs
+// @access Private
+const getDailyLogs = asyncHandler(async (req, res) => {
+  const { timesheetId } = req.params;
+  const timesheet = await Timesheet.findById(timesheetId).lean();
+  if (!timesheet) {
+    return res.status(404).json({ message: "Timesheet does not exist!" });
+  }
+  const logs = timesheet.dailyLogs;
+  res.json(logs || []);
+});
+
 // @desc Add a new timesheet
-// @route POST /timesheet
+// @route POST /timesheets
 // @access Private
 const addNewTimesheet = asyncHandler(async (req, res) => {
   const { user, year, month } = req.body;
@@ -37,31 +50,110 @@ const addNewTimesheet = asyncHandler(async (req, res) => {
     dailyLogs: [],
   };
 
-  const newTimesheet = Timesheet.create(timesheetObject);
+  const newTimesheet = await Timesheet.create(timesheetObject);
 
   if (newTimesheet) {
-    res
-      .status(201)
-      .json({ message: `New timesheet for ${user.username} created!` });
+    res.status(201).json({ message: `New timesheet created!` });
   } else {
     res.status(400).json({ message: "Invalid timesheet data received!" });
   }
 });
 
+// @desc Add a new daily log
+// @route POST /timesheets/:timesheetId/dailyLogs
+// @access Private
+const addNewDailyLog = asyncHandler(async (req, res) => {
+  const { timesheetId } = req.params;
+  const { day, from, to, hourlyPay } = req.body;
+
+  // Confirm data
+  if (day === null || from === null || to === null || hourlyPay === null) {
+    return res.status(400).json({ message: "All fields are required!" });
+  }
+
+  const timesheet = await Timesheet.findById(timesheetId);
+  if (!timesheet) {
+    return res.status(404).json({ message: "Timesheet not found!" });
+  }
+
+  // Calculate earnings
+  const hoursWorked = to - from;
+  const earnings = hoursWorked * hourlyPay;
+
+  // Push new daily log
+  timesheet.dailyLogs.push({
+    day,
+    from,
+    to,
+    hourlyPay,
+    earnings,
+  });
+
+  const updatedTimesheet = await timesheet.save();
+
+  if (updatedTimesheet) {
+    res.status(201).json({
+      message: `Daily log added to timesheet with ID ${timesheetId} successfully!`,
+    });
+  } else {
+    res.status(400).json({ message: "Invalid data received!" });
+  }
+
+  return res.status(201).json(updatedTimesheet);
+});
+
+// @desc update a daily log
+// @route PATCH /timesheets/:timeseetId/dailyLog/:dailyLogId
+// @access Private
+
+const updateDailyLog = asyncHandler(async (req, res) => {
+  const { timesheetId, dailyLogId } = req.params;
+  const { day, from, to, hourlyPay } = req.body;
+
+  // Confirm data
+  if (day == null || from == null || to == null || hourlyPay == null) {
+    return res.status(400).json({ message: "All fields are required!" });
+  }
+
+  // Find parent timesheet
+  const timesheet = await Timesheet.findById(timesheetId);
+  if (!timesheet) {
+    return res.status(404).json({ message: "Timesheet not found!" });
+  }
+
+  // Find the daily log
+  const log = timesheet.dailyLogs.id(dailyLogId); // Mongoose subdocument
+  if (!log) {
+    return res.status(404).json({ message: "Daily log not found!" });
+  }
+
+  // Update fields
+  log.day = day;
+  log.from = from;
+  log.to = to;
+  log.hourlyPay = hourlyPay;
+  log.earnings = (to - from) * hourlyPay; // recalc earnings
+
+  // Save parent timesheet
+  await timesheet.save();
+
+  res.json({ message: "Daily log updated successfully!", dailyLog: log });
+});
+
 // @desc delete a timesheet
-// @route DELETE /timesheet
+// @route DELETE /timesheets/:timesheetId
 // @access Private
 
 const deleteTimesheet = asyncHandler(async (req, res) => {
-  const { id } = req.body;
+  const { timesheetId } = req.body;
 
   //confirm data
-  if (!id) {
+  if (!timesheetId) {
     return res.status(400).json({ message: "All fields required!" });
   }
 
   //check if note exists
-  const timesheet = await Timesheet.findByIdAndDelete(id);
+  const timesheet = await Timesheet.findByIdAndDelete(timesheetId);
 
   if (!timesheet) {
     return res.status(400).json({ message: "Timesheet not found!" });
@@ -72,4 +164,11 @@ const deleteTimesheet = asyncHandler(async (req, res) => {
   res.json(reply);
 });
 
-module.exports = { getTimesheets, addNewTimesheet, deleteTimesheet };
+module.exports = {
+  getTimesheets,
+  addNewTimesheet,
+  deleteTimesheet,
+  getDailyLogs,
+  addNewDailyLog,
+  updateDailyLog,
+};

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const dailyLogSchema = new mongoose.Schema({
-  day: { type: Number, required: true },
+  day: { type: String, required: true },
   from: { type: Number, required: true, min: 0 }, // Started working
   to: { type: Number, required: true, min: 0 }, // Finished working
   hourlyPay: { type: Number, required: true, min: 0, default: 8 }, // Hourly rate
