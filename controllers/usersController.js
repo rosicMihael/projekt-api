@@ -49,7 +49,7 @@ const createNewUser = asyncHandler(async (req, res) => {
           roles,
         };
 
-  //createand store new user
+  //create and store new user
   const user = await User.create(userObject);
 
   if (user) {

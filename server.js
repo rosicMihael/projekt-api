@@ -31,6 +31,8 @@ app.use("/users", require("./routes/userRoutes"));
 
 app.use("/notes", require("./routes/noteRoutes"));
 
+app.use("/timesheet", require("./routes/timesheetRoutes"));
+
 app.use((req, res) => {
   res.status(404);
 
