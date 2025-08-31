@@ -12,13 +12,7 @@ router
 
 router.route("/:timesheetId").delete(timesheetController.deleteTimesheet);
 
-router
-  .route("/:timesheetId/dailyLogs")
-  .get(timesheetController.getDailyLogs)
-  .post(timesheetController.addNewDailyLog);
-
-router
-  .route("/:timesheetId/dailyLogs/:dailyLogId")
-  .patch(timesheetController.updateDailyLog);
+router.route("/:timesheetId/logs").get(timesheetController.getDailyLogs);
+router.route("/:timesheetId/logs/new").post(timesheetController.addNewDailyLog);
 
 module.exports = router;

@@ -20,7 +20,7 @@ const getTimesheets = asyncHandler(async (req, res) => {
 });
 
 // @desc Get all daily logs from a timesheet
-// @route GET /timesheets/:timesheetId/dailyLogs
+// @route GET /timesheets/:timesheetId/logs
 // @access Private
 const getDailyLogs = asyncHandler(async (req, res) => {
   const { timesheetId } = req.params;
@@ -60,14 +60,14 @@ const addNewTimesheet = asyncHandler(async (req, res) => {
 });
 
 // @desc Add a new daily log
-// @route POST /timesheets/:timesheetId/dailyLogs
+// @route POST /timesheets/:timesheetId/logs/new
 // @access Private
 const addNewDailyLog = asyncHandler(async (req, res) => {
   const { timesheetId } = req.params;
-  const { day, from, to, hourlyPay } = req.body;
+  const { from, to, hourlyPay, date } = req.body;
 
   // Confirm data
-  if (day === null || from === null || to === null || hourlyPay === null) {
+  if (from === null || to === null || hourlyPay === null || date === null) {
     return res.status(400).json({ message: "All fields are required!" });
   }
 
@@ -82,7 +82,7 @@ const addNewDailyLog = asyncHandler(async (req, res) => {
 
   // Push new daily log
   timesheet.dailyLogs.push({
-    day,
+    date,
     from,
     to,
     hourlyPay,
@@ -98,10 +98,9 @@ const addNewDailyLog = asyncHandler(async (req, res) => {
   } else {
     res.status(400).json({ message: "Invalid data received!" });
   }
-
-  return res.status(201).json(updatedTimesheet);
 });
 
+/*
 // @desc update a daily log
 // @route PATCH /timesheets/:timeseetId/dailyLog/:dailyLogId
 // @access Private
@@ -140,19 +139,15 @@ const updateDailyLog = asyncHandler(async (req, res) => {
   res.json({ message: "Daily log updated successfully!", dailyLog: log });
 });
 
+*/
+
 // @desc delete a timesheet
 // @route DELETE /timesheets/:timesheetId
 // @access Private
 
 const deleteTimesheet = asyncHandler(async (req, res) => {
-  const { timesheetId } = req.body;
+  const { timesheetId } = req.params;
 
-  //confirm data
-  if (!timesheetId) {
-    return res.status(400).json({ message: "All fields required!" });
-  }
-
-  //check if note exists
   const timesheet = await Timesheet.findByIdAndDelete(timesheetId);
 
   if (!timesheet) {
@@ -170,5 +165,4 @@ module.exports = {
   deleteTimesheet,
   getDailyLogs,
   addNewDailyLog,
-  updateDailyLog,
 };
