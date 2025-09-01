@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 
 const dailyLogSchema = new mongoose.Schema({
   date: { type: String, required: true },
-  from: { type: Number, required: true, min: 0 }, // Started working
-  to: { type: Number, required: true, min: 0 }, // Finished working
-  hourlyPay: { type: Number, required: true, min: 0, default: 8 }, // Hourly rate
+  from: { type: String, required: true }, // Started working
+  to: { type: String, required: true }, // Finished working
+  hourlyPay: { type: String, required: true }, // Hourly rate
   earnings: { type: Number, required: true }, // Calculated: hours * hourlyPay
 });
 

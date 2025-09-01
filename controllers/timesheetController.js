@@ -66,23 +66,38 @@ const addNewDailyLog = asyncHandler(async (req, res) => {
   const { timesheetId } = req.params;
   const { from, to, hourlyPay, date } = req.body;
 
+  function formatDate(dateString) {
+    const [, month, day] = dateString.split("-");
+    return `${day}.${month}`;
+  }
+
+  function formatHour(hourString) {
+    const [hour, minutes] = hourString.split(":");
+    const hourNum = parseInt(hour);
+    const minutesNum = parseInt(minutes) / 60;
+    return hourNum + minutesNum;
+  }
+
   // Confirm data
   if (from === null || to === null || hourlyPay === null || date === null) {
     return res.status(400).json({ message: "All fields are required!" });
   }
+
+  // calculate earnings
+  const hoursWorked = formatHour(to) - formatHour(from);
+  const numHourlyPay = parseInt(hourlyPay);
+  const earnings = hoursWorked * numHourlyPay;
+
+  const formatedDate = formatDate(date);
 
   const timesheet = await Timesheet.findById(timesheetId);
   if (!timesheet) {
     return res.status(404).json({ message: "Timesheet not found!" });
   }
 
-  // Calculate earnings
-  const hoursWorked = to - from;
-  const earnings = hoursWorked * hourlyPay;
-
   // Push new daily log
   timesheet.dailyLogs.push({
-    date,
+    date: formatedDate,
     from,
     to,
     hourlyPay,
