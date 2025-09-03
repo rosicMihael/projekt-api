@@ -41,26 +41,17 @@ const login = asyncHandler(async (req, res) => {
     { expiresIn: "7d" }
   );
 
-  res.cookie("jwt", refreshToken, {
-    httpOnly: true, //accessible only by web server
-    secure: true, //https
-    sameSite: "none", //cross-site cookie
-    maxAge: 7 * 24 * 60 * 60 * 1000, //cookie expiry: set to match refreshToken expiry
-  });
-
-  res.json({ accessToken }); //send access token conatining uesrname and roles
+  res.json({ accessToken, refreshToken }); //send access token conatining uesrname and roles
 });
 
 // @desc Refresh
-// @route GET /auth/refresh
+// @route POST /auth/refresh
 // @access Public - because access token has expired
 
 const refresh = asyncHandler(async (req, res) => {
-  const cookies = req.cookies;
+  const { refreshToken } = req.body;
 
-  if (!cookies?.jwt) return res.status(401).json({ message: "Unauthorized." });
-
-  const refreshToken = cookies.jwt;
+  if (!refreshToken) return res.status(401).json({ message: "Unauthorized." });
 
   jwt.verify(
     refreshToken,
@@ -93,17 +84,7 @@ const refresh = asyncHandler(async (req, res) => {
 // @access Public - just to clear cookie if it exists
 
 const logout = asyncHandler(async (req, res) => {
-  const cookies = req.cookies;
-
-  if (!cookies?.jwt) return res.sendStatus(204); // no content
-
-  res.clearCookie("jwt", {
-    httpOnly: true,
-    sameSite: "none",
-    secure: true,
-  });
-
-  res.json({ message: "Cookie cleared." });
+  res.json({ message: "Logged out" });
 });
 
 module.exports = {
